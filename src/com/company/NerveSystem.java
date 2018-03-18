@@ -2,8 +2,13 @@ package com.company;
 
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+/**
+ * 基本的神经系统模拟器
+ */
 public class NerveSystem {
     /**
      * 表示一个突触
@@ -11,6 +16,8 @@ public class NerveSystem {
     public class Synapse{
         int to;
         int from;
+        //重要值 表示此突触的强度 强度为0时突触销毁
+        float s=1;
         public Synapse(int from,int to){
             this.to=to;
             this.from=from;
@@ -26,6 +33,21 @@ public class NerveSystem {
             //debug
             System.out.printf("将激活神经元%d\n",this.to);
         }
+
+        /**
+         * 突触的时间步响应
+         */
+        void step(){
+            //自动削减
+            this.s-=0.01;
+            if(this.s<=0){
+                //debug
+                System.out.printf("从神经元%d 到 神经元%d 的突触死亡\n",from,to);
+                //从from神经元中删除自己
+                NerveCell cell = NerveSystem.this.nerveCells.get(from);
+                cell.links.remove(this);
+            }
+        }
     }
 
     static final int NS_Active=1;
@@ -37,7 +59,7 @@ public class NerveSystem {
     public class NerveCell{
         int myid;
         int state;
-        List<Synapse> links=new ArrayList<>();
+        Set<Synapse> links=new HashSet<>();
         public NerveCell(int myid){
             this.myid=myid;
             state = NS_Ready;
@@ -98,11 +120,28 @@ public class NerveSystem {
             cell.active();
         }
     }
+    //以下两个为连接函数
+    void connect(int from,int to){
+        this.nerveCells.get(from).connect(to);
+    }
+    void connect(int from,Iterable<Integer> toids){
+        NerveCell cell = this.nerveCells.get(from);
+        for(Integer to:toids){
+            cell.connect(to);
+        }
+    }
 
     /**
      * 走一个时间步
      */
     void step(){
-
+        //对所有突触和神经元调用step函数
+        for(NerveCell cell:this.nerveCells){
+            cell.step();
+            for(Synapse synapse:cell.links){
+                synapse.step();
+            }
+        }
     }
+
 }
