@@ -1,15 +1,20 @@
 package com.company;
 
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import jdk.dynalink.beans.StaticClass;
+
+import javax.naming.event.NamingEvent;
+import java.util.*;
 
 /**
  * 基本的神经系统模拟器
  */
 public class NerveSystem {
+    public NerveSystem(int nervecount){
+        this.nerveCells=new ArrayList<>(nervecount);
+    }
+    static float SS_Inc=(float)0.1;
+    static float SS_Dec=(float)0.1;
     /**
      * 表示一个突触
      */
@@ -30,6 +35,8 @@ public class NerveSystem {
             ArrayList<Integer> lst=new ArrayList<>();
             lst.add(this.to);
             NerveSystem.this.active(lst);
+            //激活增加强度
+            s+=NerveSystem.SS_Inc;
             //debug
             System.out.printf("将激活神经元%d\n",this.to);
         }
@@ -38,8 +45,8 @@ public class NerveSystem {
          * 突触的时间步响应
          */
         void step(){
-            //自动削减
-            this.s-=0.01;
+            //自动削减 这里可以修改自动削减比例
+            this.s-=NerveSystem.SS_Dec;
             if(this.s<=0){
                 //debug
                 System.out.printf("从神经元%d 到 神经元%d 的突触死亡\n",from,to);
@@ -142,6 +149,20 @@ public class NerveSystem {
                 synapse.step();
             }
         }
+    }
+
+    BitSet getBits(int[] bits){
+        BitSet set = new BitSet(bits.length);
+        for(int i:bits){
+            NerveCell cell = this.nerveCells.get(i);
+            if(cell.state==NS_Active){
+                set.set(i,true);
+            }
+            else{
+                set.set(i,false);
+            }
+        }
+        return set;
     }
 
 }
