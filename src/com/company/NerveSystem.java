@@ -32,9 +32,7 @@ public class NerveSystem {
          * 激活连接的神经元
          */
         void active(){
-            ArrayList<Integer> lst=new ArrayList<>();
-            lst.add(this.to);
-            NerveSystem.this.active(lst);
+            NerveSystem.this.active(new int[]{this.to});
             //激活增加强度
             s+=NerveSystem.SS_Inc;
             //debug
@@ -121,8 +119,8 @@ public class NerveSystem {
      * 激活指定的神经元
      * @param ids 要激活的神经元
      */
-    void active(Iterable<Integer> ids){
-        for(Integer id:ids){
+    void active(int[] ids){
+        for(int id:ids){
             NerveCell cell=nerveCells.get(id);
             cell.active();
         }

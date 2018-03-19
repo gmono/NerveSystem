@@ -6,23 +6,29 @@ import javax.naming.event.NamingEvent;
 import java.util.BitSet;
 
 public class NumberStatment extends NerveStatment {
-    static int[] getNBits(int start){
-        int[] bits=new int[8];
-        for(int i = 0;i<8;++i){
-            bits[i]=start+i;
-        }
-        return bits;
+    static final int Bit_Byte=8;
+    static final int Bit_Short=16;
+    static final int Bit_Int=32;
+    static final int Bit_Long=64;
+    int start;
+    public NumberStatment(NerveSystem system, int start)
+    {
+        super(system);
+        this.start=start;
     }
-    public NumberStatment(NerveSystem system, int start) {
-        super(system, getNBits(start));
+    public byte[] getBytes(int len){
+        BitSet set = system.getBits(getNBits(start,len));
+        return set.toByteArray();
     }
     public byte getByte(){
-        BitSet set=system.getBits(this.bitlist);
-        byte[] bytes = set.toByteArray();
-        return bytes[0];
+        return this.getBytes(8)[0];
     }
     public int getInt(){
-        BitSet set=system.getBits(this.bitlist);
-        byte[] bytes = set.toByteArray();
+        byte[] bs=this.getBytes(32);
+        assert bs.length==4;
+        return   bs[3] & 0xFF |
+                (bs[2] & 0xFF) << 8 |
+                (bs[1] & 0xFF) << 16 |
+                (bs[0] & 0xFF) << 24;
     }
 }
