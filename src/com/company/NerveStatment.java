@@ -2,6 +2,8 @@ package com.company;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 对一个神经系统中的几个神经元的状态进行描述
@@ -29,5 +31,22 @@ public class NerveStatment {
         }
         return bits;
     }
+
+    /**
+     * 根据一个比特集得到激活id数组
+     * @param start 开始位置
+     * @param set 比特集
+     * @return 激活数组
+     */
+    static int[] getActiveIds(int start,BitSet set){
+        List<Integer> a=new LinkedList<>();
+        for(int i=0;i<set.size();++i){
+            if(set.get(i)) a.add(i);
+        }
+        //Integer数组到int数组
+        return a.stream().mapToInt((t)->t).toArray();
+    }
+
+
 
 }
