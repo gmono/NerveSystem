@@ -40,8 +40,8 @@ public class NerveStatment {
      */
     static int[] getActiveIds(int start,BitSet set){
         List<Integer> a=new LinkedList<>();
-        for(int i=0;i<set.size();++i){
-            if(set.get(i)) a.add(i);
+        for(int i=0;i<set.length();++i){
+            if(set.get(i)) a.add(start+i);
         }
         //Integer数组到int数组
         return a.stream().mapToInt((t)->t).toArray();

@@ -12,6 +12,9 @@ import java.util.*;
 public class NerveSystem {
     public NerveSystem(int nervecount){
         this.nerveCells=new ArrayList<>(nervecount);
+        for(int i=0;i<nervecount;++i){
+            nerveCells.add(new NerveCell(i));
+        }
     }
     static float SS_Inc=(float)0.1;
     static float SS_Dec=(float)0.1;
@@ -36,7 +39,7 @@ public class NerveSystem {
             //激活增加强度
             s+=NerveSystem.SS_Inc;
             //debug
-            System.out.printf("将激活神经元%d\n",this.to);
+            System.out.printf("突触响应,将激活神经元%d\n",this.to);
         }
 
         /**
