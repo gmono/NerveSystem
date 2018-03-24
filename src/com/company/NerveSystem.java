@@ -4,6 +4,7 @@ package com.company;
 import jdk.dynalink.beans.StaticClass;
 
 import javax.naming.event.NamingEvent;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -27,6 +28,7 @@ public class NerveSystem {
         //重要值 表示此突触的强度 强度为0时突触销毁
         float s=1;
         public Synapse(int from,int to){
+            assert from!=to;
             this.to=to;
             this.from=from;
         }
@@ -52,8 +54,7 @@ public class NerveSystem {
                 //debug
                 System.out.printf("从神经元%d 到 神经元%d 的突触死亡\n",from,to);
                 //从from神经元中删除自己
-                NerveCell cell = NerveSystem.this.nerveCells.get(from);
-                cell.links.remove(this);
+                NerveSystem.this.disconnect(from,to);
             }
         }
     }
@@ -68,6 +69,7 @@ public class NerveSystem {
         int myid;
         int state;
         Set<Synapse> links=new HashSet<>();
+        Map<Integer,Synapse> towards=new HashMap<>();
         public NerveCell(int myid){
             this.myid=myid;
             state = NS_Ready;
@@ -75,20 +77,24 @@ public class NerveSystem {
 
         /**
          * 激活与之相连的突触
+         * @return 返回中枢神经元的激励值 给突触的激励值
          */
-        void active(){
+        float active(){
             //已经是激活状态或者为休眠状态就不会再次传导
             if(state==NS_Active||state==NS_Sleeping){
                 //debug
                 System.out.printf("神经元%d已经为状态%d，将不会激活\n",myid,state);
-                return;
+                if(state==NS_Active) return SS_Inc*2;
+                else return SS_Inc;
             }
             //开始激活过程
+            this.state=NS_Active;
             for(Synapse synapse:this.links){
                 synapse.active();
             }
             //debug
             System.out.printf("神经元%d被激活，将传道至%d个突触\n",myid,this.links.size());
+            return SS_Inc;
         }
 
         /**
@@ -107,37 +113,80 @@ public class NerveSystem {
                     break;
             }
             //debug
-            System.out.printf("神经元%d号 从state:%d 转换到state:%d\n",myid,old,this.state);
+            if(old!=this.state)
+                System.out.printf("神经元%d号 从state:%d 转换到state:%d\n",myid,old,this.state);
         }
 
+        /**
+         * 连接这个神经元到另一个神经元 如果没有连接的话
+         * @param to 目的神经元
+         */
         void connect(int to){
+            assert to!=myid;
+            if(towards.containsKey(to)){
+                System.out.println("已经存在连接，连接取消");
+            }
             Synapse synapse=new Synapse(this.myid,to);
             this.links.add(synapse);
+            this.towards.put(to,synapse);
+        }
+
+        /**
+         * 解除连接
+         * @param to 目的神经元
+         */
+        void disconnect(int to){
+            this.links.remove(towards.get(to));
+            this.towards.remove(to);
+        }
+
+        /**
+         * 解除连接
+         * @param synapse 目的突触
+         */
+        void discontect(Synapse synapse){
+            this.towards.remove(synapse.to);
+            this.links.remove(synapse);
         }
     }
     //神经元集合
     List<NerveCell> nerveCells;
 
+    Set<Integer> actived=new HashSet<>();
     /**
      * 激活指定的神经元
      * @param ids 要激活的神经元
      */
-    void active(int[] ids){
+    public void active(int[] ids){
         for(int id:ids){
             NerveCell cell=nerveCells.get(id);
             cell.active();
+            actived.add(id);
         }
+        //记录激活的神经元
     }
     //以下两个为连接函数
-    void connect(int from,int to){
+    public void connect(int from,int to){
         this.nerveCells.get(from).connect(to);
     }
-    void connect(int from,Iterable<Integer> toids){
+    public void connect(int from,int[] toids){
         NerveCell cell = this.nerveCells.get(from);
-        for(Integer to:toids){
+        for(int to:toids){
             cell.connect(to);
         }
     }
+    //以下为两个解除连接的函数
+    public void disconnect(int from,int to){
+        NerveCell cell = this.nerveCells.get(from);
+        cell.disconnect(to);
+    }
+    public void disconnect(int from,int[] toids){
+        NerveCell cell = this.nerveCells.get(from);
+        for(int id:toids){
+            cell.disconnect(id);
+        }
+    }
+
 
     /**
      * 走一个时间步
@@ -150,6 +199,28 @@ public class NerveSystem {
                 synapse.step();
             }
         }
+        //执行策略
+        this.next();
+    }
+
+    /**
+     * 可重写 用于定制step策略 默认为激活的互联连接
+     */
+    private void next(){
+        for(int id:actived){
+            for(int to:actived){
+                    this.connect(id,to);
+            }
+        }
+    }
+
+    /**
+     * 内部工具函数 用于根据id号获取神经元
+     * @param id
+     * @return  神经元
+     */
+    private NerveCell getNerve(int id){
+        return this.nerveCells.get(id);
     }
 
     BitSet getBits(int[] bits){

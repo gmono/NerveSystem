@@ -41,6 +41,7 @@ public class Main {
             statment.activeByte(t1);
             statment1.activeByte(t2);
             outstatment.activeByte(t3);
+            system.step();
         }
     }
 }
