@@ -24,6 +24,7 @@ public class NumberStatment extends NerveStatment {
      */
     public byte[] getBytes(int len){
         BitSet set = system.getBits(getNBits(start,len));
+        if(set.length()==0) return new byte[]{0};
         return set.toByteArray();
     }
 

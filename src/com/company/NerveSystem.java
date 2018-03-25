@@ -1,6 +1,7 @@
 package com.company;
 
 
+import javafx.scene.control.Cell;
 import jdk.dynalink.beans.StaticClass;
 
 import javax.naming.event.NamingEvent;
@@ -11,6 +12,7 @@ import java.util.*;
  * 基本的神经系统模拟器
  */
 public class NerveSystem {
+    static final boolean DEBUG=false;
     public NerveSystem(int nervecount){
         this.nerveCells=new ArrayList<>(nervecount);
         for(int i=0;i<nervecount;++i){
@@ -40,8 +42,8 @@ public class NerveSystem {
             NerveSystem.this.active(new int[]{this.to});
             //激活增加强度
             s+=NerveSystem.SS_Inc;
-            //debug
-            System.out.printf("突触响应,将激活神经元%d\n",this.to);
+            if(DEBUG)
+                System.out.printf("突触响应,将激活神经元%d\n",this.to);
         }
 
         /**
@@ -51,8 +53,8 @@ public class NerveSystem {
             //自动削减 这里可以修改自动削减比例
             this.s-=NerveSystem.SS_Dec;
             if(this.s<=0){
-                //debug
-                System.out.printf("从神经元%d 到 神经元%d 的突触死亡\n",from,to);
+                if(DEBUG)
+                    System.out.printf("从神经元%d 到 神经元%d 的突触死亡\n",from,to);
                 //从from神经元中删除自己
                 NerveSystem.this.disconnect(from,to);
             }
@@ -68,8 +70,8 @@ public class NerveSystem {
     public class NerveCell{
         int myid;
         int state;
-        Set<Synapse> links=new HashSet<>();
-        Map<Integer,Synapse> towards=new HashMap<>();
+        Set<Synapse> links=Collections.synchronizedSet(new HashSet<>());
+        Map<Integer,Synapse> towards=Collections.synchronizedMap(new HashMap<>());
         public NerveCell(int myid){
             this.myid=myid;
             state = NS_Ready;
@@ -82,8 +84,8 @@ public class NerveSystem {
         float active(){
             //已经是激活状态或者为休眠状态就不会再次传导
             if(state==NS_Active||state==NS_Sleeping){
-                //debug
-                System.out.printf("神经元%d已经为状态%d，将不会激活\n",myid,state);
+                if(DEBUG)
+                    System.out.printf("神经元%d已经为状态%d，将不会激活\n",myid,state);
                 if(state==NS_Active) return SS_Inc*2;
                 else return SS_Inc;
             }
@@ -92,8 +94,8 @@ public class NerveSystem {
             for(Synapse synapse:this.links){
                 synapse.active();
             }
-            //debug
-            System.out.printf("神经元%d被激活，将传道至%d个突触\n",myid,this.links.size());
+            if(DEBUG)
+                System.out.printf("神经元%d被激活，将激活%d个突触\n",myid,this.links.size());
             return SS_Inc;
         }
 
@@ -113,7 +115,7 @@ public class NerveSystem {
                     break;
             }
             //debug
-            if(old!=this.state)
+            if(old!=this.state&&DEBUG)
                 System.out.printf("神经元%d号 从state:%d 转换到state:%d\n",myid,old,this.state);
         }
 
@@ -124,7 +126,8 @@ public class NerveSystem {
         void connect(int to){
             assert to!=myid;
             if(towards.containsKey(to)){
-                System.out.println("已经存在连接，连接取消");
+                if(DEBUG)
+                    System.out.println("已经存在连接，连接取消");
             }
             Synapse synapse=new Synapse(this.myid,to);
             this.links.add(synapse);
@@ -147,6 +150,14 @@ public class NerveSystem {
         void discontect(Synapse synapse){
             this.towards.remove(synapse.to);
             this.links.remove(synapse);
+        }
+
+        /**
+         * 得到toward集
+         * @return towards集
+         */
+        public Set<Integer> getTowards(){
+            return this.towards.keySet();
         }
     }
     //神经元集合
@@ -195,7 +206,8 @@ public class NerveSystem {
         //对所有突触和神经元调用step函数
         for(NerveCell cell:this.nerveCells){
             cell.step();
-            for(Synapse synapse:cell.links){
+            Set<Synapse> linkscopy=new HashSet<>(cell.links);
+            for(Synapse synapse:linkscopy){
                 synapse.step();
             }
         }
@@ -209,6 +221,7 @@ public class NerveSystem {
     private void next(){
         for(int id:actived){
             for(int to:actived){
+                if(id!=to)
                     this.connect(id,to);
             }
         }
@@ -225,8 +238,9 @@ public class NerveSystem {
 
     BitSet getBits(int[] bits){
         BitSet set = new BitSet(bits.length);
-        for(int i:bits){
-            NerveCell cell = this.nerveCells.get(i);
+        for(int i=0;i<bits.length;++i){
+            int idx=bits[i];
+            NerveCell cell = this.nerveCells.get(idx);
             if(cell.state==NS_Active){
                 set.set(i,true);
             }
