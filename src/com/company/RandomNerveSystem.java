@@ -21,8 +21,8 @@ public class RandomNerveSystem extends NerveSystem {
     }
 
     @Override
-    void step() {
-        super.step();
+    protected void next() {
+        super.next();
         //添加新的随机连接
         int count=(int)(this.randp*this.nerveCells.size());
         Random random=new Random();

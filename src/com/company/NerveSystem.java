@@ -28,7 +28,8 @@ public class NerveSystem {
         int to;
         int from;
         //重要值 表示此突触的强度 强度为0时突触销毁
-        float s=1;
+        //修改此初始值可使突触有不同的行为
+        float s=(float)0.1;
         public Synapse(int from,int to){
             assert from!=to;
             this.to=to;
@@ -41,15 +42,19 @@ public class NerveSystem {
         void active(){
             NerveSystem.this.active(new int[]{this.to});
             //激活增加强度
-            s+=NerveSystem.SS_Inc;
+            active_inc=NerveSystem.SS_Inc;
             if(DEBUG)
                 System.out.printf("突触响应,将激活神经元%d\n",this.to);
         }
 
+        //表示此回合中突触的强度增加值
+        float active_inc=0;
         /**
          * 突触的时间步响应
          */
         void step(){
+            //加上本回合增加值
+            this.s+=active_inc;
             //自动削减 这里可以修改自动削减比例
             this.s-=NerveSystem.SS_Dec;
             if(this.s<=0){
@@ -218,7 +223,8 @@ public class NerveSystem {
     /**
      * 可重写 用于定制step策略 默认为激活的互联连接
      */
-    private void next(){
+    protected void next(){
+        System.out.println("执行默认行为！请使用派生类重写Next函数，默认行为不会产生任何效果");
         for(int id:actived){
             for(int to:actived){
                 if(id!=to)
