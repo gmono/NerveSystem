@@ -70,5 +70,36 @@ public class Main {
 
             }
         });
+        Button start=new Button("start");
+        start.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                for(int i=0;i<1000;++i) {
+                    try {
+                        byte t1 = (byte) (random.nextInt() % 10);
+                        byte t2 = (byte) (random.nextInt() % 10);
+                        byte t3 = (byte) (t1 + t2);
+                        //激活
+                        statment.activeByte(t1);
+                        statment1.activeByte(t2);
+                        //输出学习前
+                        byte out = outstatment.getByte();
+                        System.out.printf("学习前:\n%d + %d = %d\n", t1, t2, out);
+                        //学习
+                        outstatment.activeByte(t3);
+                        //输出学习后
+                        out = outstatment.getByte();
+                        System.out.printf("学习后:\n %d + %d = %d\n", t1, t2, out);
+                        //重绘
+                        system.step();
+                        Thread.sleep(1000);
+                        frame.repaint();
+                    }catch (Exception te){
+
+                    }
+                }
+            }
+        });
+        frame.add(start,BorderLayout.EAST);
     }
 }

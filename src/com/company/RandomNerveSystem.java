@@ -17,12 +17,23 @@ public class RandomNerveSystem extends NerveSystem {
         this.randp=randp;
     }
     public RandomNerveSystem(int nervecount){
-        this(nervecount,0.01);
+        this(nervecount,0.05);
     }
 
     @Override
     protected void next() {
-        super.next();
+        //激活触发
+        int max=10;
+        cont:
+        for(int id:actived){
+            for(int to:actived){
+                if(id!=to) {
+                    max--;
+                    this.connect(id, to);
+                    if(max<=0) break cont;
+                }
+            }
+        }
         //添加新的随机连接
         int count=(int)(this.randp*this.nerveCells.size());
         Random random=new Random();
